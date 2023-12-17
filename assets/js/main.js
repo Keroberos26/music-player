@@ -23,13 +23,29 @@ const nextBtn = $('.btn-next');
 const prevBtn = $('.btn-prev');
 const randomBtn = $('.btn-random');
 const repeatBtn = $('.btn-repeat');
+const volumeBtn = $('.btn-volume');
 const playlist = $('.playlist');
+const volume = $('#volume');
+
+const formatTime = function (seconds) {
+  // Chuyển tổng số giây thành phút và giây
+  var minutes = Math.floor(seconds / 60);
+  var remainingSeconds = Math.floor(seconds % 60);
+
+  // Thêm số 0 đằng trước nếu cần thiết
+  remainingSeconds = remainingSeconds < 10 ? '0' + remainingSeconds : remainingSeconds;
+
+  // Kết hợp thành định dạng "mm:ss"
+  return minutes + ':' + remainingSeconds;
+};
 
 const app = {
   currentIndex: 0,
+  volume: 1,
   isPlaying: false,
   isRandom: false,
   isRepeat: false,
+  isMute: false,
   config: JSON.parse(localStorage.getItem(PLAYER_STORAGE_KEY)) || {},
   setConfig: function (key, value) {
     this.config[key] = value;
@@ -126,6 +142,7 @@ const app = {
     audio.on('timeupdate', function () {
       const progressPercent = Math.floor((this.currentTime / this.duration) * 100);
       progress.val(progressPercent);
+      $('.time .current').text(formatTime(audio[0].currentTime));
     });
 
     audio.on('ended', function () {
@@ -136,17 +153,13 @@ const app = {
       }
     });
 
+    audio.on('loadedmetadata', function () {
+      $('.time .duration').text(formatTime(audio[0].duration));
+    });
+
     progress.on('input', function () {
       const time = ($(this).val() * audio[0].duration) / 100;
       audio[0].currentTime = time;
-    });
-
-    progress.on('mousedown touchstart', function () {
-      audio[0].pause();
-    });
-
-    progress.on('mouseup touchend', function () {
-      audio[0].play();
     });
 
     prevBtn.click(function () {
@@ -197,11 +210,38 @@ const app = {
       if (optionNode) {
       }
     });
+
+    volumeBtn.on('click', function () {
+      if (window.innerWidth > 768) {
+        _this.isMute = !_this.isMute;
+        volumeBtn.toggleClass('mute', _this.isMute);
+        volume.val(_this.currentVolume * 100);
+        _this.setConfig('isMute', _this.isMute);
+        audio[0].volume = _this.currentVolume;
+      }
+    });
+
+    volume.on('input', function () {
+      _this.volume = $(this).val() / 100;
+      _this.setConfig('volume', _this.volume);
+      audio[0].volume = _this.currentVolume;
+      // Bug click vào kéo
+      if (_this.volume === 0) {
+        volumeBtn.addClass('mute');
+      } else {
+        volumeBtn.removeClass('mute');
+      }
+    });
   },
   defineProperties: function () {
     Object.defineProperty(this, 'currentSong', {
       get: function () {
         return this.songs[this.currentIndex];
+      },
+    });
+    Object.defineProperty(this, 'currentVolume', {
+      get: function () {
+        return this.isMute ? 0 : this.volume;
       },
     });
   },
@@ -226,9 +266,9 @@ const app = {
         {
           scrollTop: songActive.offset().top + songActive.outerHeight(true) - $(window).height(),
         },
-        500,
+        300,
       );
-    }, 200);
+    }, 100);
   },
   loadCurrentSong: function () {
     heading.text(this.currentSong.name);
@@ -238,6 +278,8 @@ const app = {
   loadConfig: function () {
     this.isRandom = this.config.isRandom;
     this.isRepeat = this.config.isRepeat;
+    this.isMute = this.config.isMute;
+    this.volume = this.config.volume;
   },
   prevSong: function () {
     this.currentIndex--;
@@ -273,8 +315,11 @@ const app = {
     // Render playlist
     this.render();
 
+    audio[0].volume = this.currentVolume;
+    volume.val(this.currentVolume * 100);
     randomBtn.toggleClass('active', this.isRandom);
     repeatBtn.toggleClass('active', this.isRepeat);
+    volumeBtn.toggleClass('mute', this.isMute);
   },
 };
 

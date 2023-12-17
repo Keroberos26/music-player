@@ -50,9 +50,28 @@
         </div>
       </div>
 
-      <input id="progress" class="progress" type="range" value="0" step="1" min="0" max="100">
+      <div class="time-volume">
+        <div class="progress-bar">
+          <input id="progress" class="progress" type="range" value="0" step="1" min="0" max="100">
+          <div class="time">
+            <span class="current">0:00</span>
+            <span class="duration">3:30</span>
+          </div>
+        </div>
 
-      <audio id="audio" src="" volume="0"></audio>
+        <div class="btn">
+          <div class="btn-volume">
+            <i class="fas fa-volume-up icon-unmute"></i>
+            <i class="fas fa-volume-mute icon-mute"></i>
+          </div>
+          <div class="volume-bar">
+            <input type="range" id="volume" class="volume" min="0" max="100" value="100" step="1">
+          </div>
+        </div>
+      </div>
+
+      <audio id="audio" src=""></audio>
+
     </div>
 
     <!-- Playlist -->
